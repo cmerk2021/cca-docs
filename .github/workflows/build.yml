@@ -25,9 +25,8 @@ jobs:
       - name: Build site
         run: npx eleventy
 
-      # Optional: Upload build output as artifact (for debugging or preview)
-      # - name: Upload site output
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: site
-      #     path: _site/
+      - name: Upload site output
+        uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: _site/
