@@ -1,6 +1,0 @@
-name = "eleventy-worker"
-type = "javascript"
-
-[site]
-bucket = "./_site"
-entry-point = "workers-site"
