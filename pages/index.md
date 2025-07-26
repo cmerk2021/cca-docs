@@ -3,7 +3,7 @@ layout: main.njk
 title: "Network Privacy Notice"
 nav: "Network Privacy Notice"
 category: "Other"
-order: 2
+order: 1
 ---
 
 

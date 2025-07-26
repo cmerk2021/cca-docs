@@ -7,7 +7,7 @@ module.exports = function (eleventyConfig) {
     linkify: true
   });
 
-  // GOV.UK tag classes
+  // Add GOV.UK classes to headings
   md.renderer.rules.heading_open = function (tokens, idx) {
     const tag = tokens[idx].tag;
     const govukClass = {
@@ -19,50 +19,64 @@ module.exports = function (eleventyConfig) {
     return `<${tag} class="${govukClass}">`;
   };
 
+  // Add GOV.UK list and blockquote classes
   md.renderer.rules.bullet_list_open = () => '<ul class="govuk-list govuk-list--bullet">';
   md.renderer.rules.ordered_list_open = () => '<ol class="govuk-list govuk-list--number">';
   md.renderer.rules.blockquote_open = () => '<blockquote class="govuk-inset-text">';
 
-  // Default paragraph renderer
-  const defaultParagraphOpen = md.renderer.rules.paragraph_open || function (tokens, idx, options, env, self) {
-    return self.renderToken(tokens, idx, options);
-  };
+  // Paragraph logic: only suppress <p> inside list items, otherwise use govuk-body
+  md.renderer.rules.paragraph_open = function (tokens, idx) {
+    const insideList =
+      tokens[idx - 2] && tokens[idx - 2].type === "list_item_open";
 
-  const defaultParagraphClose = md.renderer.rules.paragraph_close || function (tokens, idx, options, env, self) {
-    return self.renderToken(tokens, idx, options);
-  };
-
-  // Override paragraph rendering ONLY inside list items
-  md.renderer.rules.paragraph_open = function (tokens, idx, options, env, self) {
-    const prev = tokens[idx - 1];
-    const next = tokens[idx + 1];
-    const insideList = tokens[idx - 2] && tokens[idx - 2].type === "list_item_open";
-
-    // If the paragraph is inside a list item and it's tight (not followed by a hardbreak or blank line)
-    if (insideList && prev.type === "list_item_open" && next && next.type === "inline") {
-      return ""; // suppress <p>
+    if (insideList) {
+      return ""; // suppress <p> inside list items
     }
 
-    return defaultParagraphOpen(tokens, idx, options, env, self);
+    return '<p class="govuk-body">';
   };
 
-  md.renderer.rules.paragraph_close = function (tokens, idx, options, env, self) {
-    const next = tokens[idx + 1];
-    const insideList = tokens[idx - 2] && tokens[idx - 2].type === "list_item_open";
+  md.renderer.rules.paragraph_close = function (tokens, idx) {
+    const insideList =
+      tokens[idx - 2] && tokens[idx - 2].type === "list_item_open";
 
-    if (insideList && next && next.type === "list_item_close") {
-      return ""; // suppress </p>
+    if (insideList) {
+      return ""; // suppress </p> inside list items
     }
 
-    return defaultParagraphClose(tokens, idx, options, env, self);
+    return '</p>';
   };
 
-  // GOV.UK paragraph default elsewhere
-  md.renderer.rules.text = function (tokens, idx) {
-    return tokens[idx].content;
-  };
+  // DO NOT override text rule – this was nuking default Markdown formatting!
+  // Leave md.renderer.rules.text = ... out entirely.
 
   eleventyConfig.setLibrary("md", md);
+
+  // OPTIONAL: fix navigation if needed
+  eleventyConfig.addCollection("docsGroupedByCategory", function (collectionApi) {
+  const docs = collectionApi.getFilteredByGlob("./pages/**/*.md");
+
+  const grouped = {};
+
+  for (let item of docs) {
+    const category = item.data.category || "Other";
+    if (!grouped[category]) grouped[category] = [];
+    grouped[category].push(item);
+  }
+
+  // Sort items within each category
+  for (const category in grouped) {
+    grouped[category].sort((a, b) => {
+      const aOrder = a.data.order || 0;
+      const bOrder = b.data.order || 0;
+      return aOrder - bOrder;
+    });
+  }
+
+  return grouped;
+});
+
+
 
   return {
     dir: {
