@@ -1,0 +1,10 @@
+name = "cca-docs"
+type = "javascript"
+
+account_id = "95281db946d395cd848c65237b0e7d70"
+workers_dev = true
+compatibility_date = "2025-07-28"
+
+[site]
+bucket = "./_site"          # <-- Your Eleventy output folder
+entry-point = "workers"
